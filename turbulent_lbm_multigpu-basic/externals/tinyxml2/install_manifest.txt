@@ -1,0 +1,6 @@
+/usr/local/lib/x86_64-linux-gnu/libtinyxml2.so.2.1.0
+/usr/local/lib/x86_64-linux-gnu/libtinyxml2.so.2
+/usr/local/lib/x86_64-linux-gnu/libtinyxml2.so
+/usr/local/lib/x86_64-linux-gnu/libtinyxml2.a
+/usr/local/include/tinyxml2.h
+/usr/local/lib/x86_64-linux-gnu/pkgconfig/tinyxml2.pc

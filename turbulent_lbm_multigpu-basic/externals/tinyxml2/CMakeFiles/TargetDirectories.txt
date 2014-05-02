@@ -1,0 +1,4 @@
+/home/ayman/CSE/HiWi/hybrid_gpu_cpu_LBM/turbulent_lbm_multigpu-basic/externals/tinyxml2/CMakeFiles/DATA_COPY.dir
+/home/ayman/CSE/HiWi/hybrid_gpu_cpu_LBM/turbulent_lbm_multigpu-basic/externals/tinyxml2/CMakeFiles/test.dir
+/home/ayman/CSE/HiWi/hybrid_gpu_cpu_LBM/turbulent_lbm_multigpu-basic/externals/tinyxml2/CMakeFiles/tinyxml2.dir
+/home/ayman/CSE/HiWi/hybrid_gpu_cpu_LBM/turbulent_lbm_multigpu-basic/externals/tinyxml2/CMakeFiles/tinyxml2static.dir

@@ -139,12 +139,12 @@ class CController
 		// load standard context for GPU devices
 #if DEBUG
 		std::cout << "loading gpu context" << std::endl;
-#endifCController
+#endif
 
 		cContext = new CCL::CContext(*cPlatform, CL_DEVICE_TYPE_GPU);
 
 		// load devices belonging to cContext
-#if DEBUGCCL
+#if DEBUG
 		std::cout << "loading devices" << std::endl;
 #endif
 		cDevices = new CCL::CDevices(*cContext);

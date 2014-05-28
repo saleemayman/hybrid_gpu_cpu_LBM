@@ -17,12 +17,16 @@ private:
 	CVector<3, int> _comm_direction;
 
 public:
+	// initialiser list for class members in the constructor.
 	CComm(int dstID, CVector<3, int> send_size, CVector<3, int> recv_size,
 			CVector<3, int> send_origin, CVector<3, int> recv_origin,
 			CVector<3, int> comm_direction) :
-			_dstID(dstID), _send_size(send_size), _recv_size(recv_size), _send_origin(
-					send_origin), _recv_origin(recv_origin), _comm_direction(
-					comm_direction) {
+			_dstID(dstID),
+			_send_size(send_size),
+			_recv_size(recv_size),
+			_send_origin(send_origin),
+			_recv_origin(recv_origin),
+			_comm_direction(comm_direction) {
 	}
 
 	~CComm() {

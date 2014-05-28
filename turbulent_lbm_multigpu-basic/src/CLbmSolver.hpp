@@ -74,6 +74,7 @@ private:
 	int _UID;
 	static const size_t SIZE_DD_HOST_BYTES = SIZE_DD_HOST * sizeof(T);
 	int _BC[3][2]; ///< Boundary conditions. First index specifys the dimension and second the upper or the lower boundary.
+	
 	// opencl handlers
 	CCL::CCommandQueue &cCommandQueue;
 	CCL::CContext &cContext;

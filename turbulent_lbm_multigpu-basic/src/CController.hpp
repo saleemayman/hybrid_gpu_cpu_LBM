@@ -57,9 +57,12 @@ class CController
 	int _UID; ///< Unique ID of each controller
 	CDomain<T> _domain; ///< Domain data
 	ILbmVisualization<T>* cLbmVisualization; ///< Visualization class
-	CLbmSolver<T> *cLbmPtr;
-	int _BC[3][2]; ///< Boundary conditions. First index specifies the dimension and second the upper or the lower boundary.
-	std::vector<CComm<T>*> _comm_container; ///< A std::Vector containing all the communcation objects for the subdomain
+	CLbmSolver<T> *cLbmPtr;	// acts as a wrapper around all OpenCL kernels. Provides interface functions
+							// for enqueuing computation and device/host communication kernels.
+	int _BC[3][2]; 	///< Boundary conditions. First index specifies the dimension and second the upper or
+					//	the lower boundary.
+	std::vector<CComm<T>*> _comm_container; ///< A std::Vector containing all the communcation objects
+											// for the subdomain
 
 	T vector_checksum;
 	CCL::CPlatforms* cPlatforms;
@@ -69,6 +72,7 @@ class CController
 	CCL::CDevice* cDevice;
 	CCL::CCommandQueue* cCommandQueue;
 
+	// does something realted to the CLbmSolver pointer cLbmPtr
 	void outputDD(int dd_i) {
 		std::cout << "DD " << dd_i << std::endl;
 		//					int gcd = CMath<int>::gcd(cLbmPtr->domain_cells[0],wrap_max_line);
@@ -76,11 +80,13 @@ class CController
 		//						gcd = wrap_max_line;
 		int wrap_max_line = 16;
 		int gcd = wrap_max_line;
-		cLbmPtr->debugDD(dd_i, gcd,
-				cLbmPtr->domain_cells[0] * cLbmPtr->domain_cells[1]);
+
+		// TODO: find function debugDD....?
+		cLbmPtr->debugDD(dd_i, gcd,	cLbmPtr->domain_cells[0] * cLbmPtr->domain_cells[1]);
 	}
 
 	int initLBMSolver() {
+	// TODO: what are these platforms.....?
 
 #if DEBUG
 		std::cout << "loading platforms" << std::endl;
@@ -88,18 +94,22 @@ class CController
 		cPlatforms = new CCL::CPlatforms();
 		cPlatforms->load();
 
-		if (cPlatforms->platform_ids_count == 0) {
+		// checks for the number of platform IDs
+		if (cPlatforms->platform_ids_count == 0)
+		{
 			std::cerr << "no platform found!" << std::endl;
 			return -1;
 		}
 
 		int platform_id_nr = -1;
-		for (size_t i = 0; i < cPlatforms->platform_ids_count; i++) {
+		for (size_t i = 0; i < cPlatforms->platform_ids_count; i++)
+		{
 			CCL::CPlatform cPlatform(cPlatforms->platform_ids[i]);
 			cPlatform.loadPlatformInfo();
 
 			if (platform_id_nr == -1)
-				if (strcmp(cPlatform.profile, "FULL_PROFILE") == 0) {
+				if (strcmp(cPlatform.profile, "FULL_PROFILE") == 0)
+				{
 					platform_id_nr = i;
 #if DEBUG
 					std::cout << "Using Platform " << (i+1) << " for computation" << std::endl;
@@ -117,7 +127,8 @@ class CController
 #endif
 		}
 
-		if (platform_id_nr == -1) {
+		if (platform_id_nr == -1)
+		{
 			std::cout << "no usable platform found" << std::endl;
 			return -1;
 		}
@@ -128,12 +139,12 @@ class CController
 		// load standard context for GPU devices
 #if DEBUG
 		std::cout << "loading gpu context" << std::endl;
-#endif
+#endifCController
 
 		cContext = new CCL::CContext(*cPlatform, CL_DEVICE_TYPE_GPU);
 
 		// load devices belonging to cContext
-#if DEBUG
+#if DEBUGCCL
 		std::cout << "loading devices" << std::endl;
 #endif
 		cDevices = new CCL::CDevices(*cContext);
@@ -143,6 +154,7 @@ class CController
 			return -1;
 		}
 
+		//  a singleton class of configuration created by Instance() using Singleton.hpp defined in common.h
 		if (ConfigSingleton::Instance()->device_nr == -1) {
 			// list available devices
 			for (int i = 0; i < (int) cDevices->size(); i++) {
@@ -163,21 +175,24 @@ class CController
 		}
 
 		if (ConfigSingleton::Instance()->device_nr < 0
-				|| ConfigSingleton::Instance()->device_nr
-						>= (int) cDevices->size()) {
-			std::cerr
-					<< "invalid device number - use option \"-d -1\" to list all devices"
+			|| ConfigSingleton::Instance()->device_nr >= (int) cDevices->size()) {
+			std::cerr<< "invalid device number - use option \"-d -1\" to list all devices"
 					<< std::endl;
 			return -1;
 		}
+
 		int dev_nr = 0;
 		char processor_name[MPI_MAX_PROCESSOR_NAME];
 		int name_len;
 		MPI_Get_processor_name(processor_name, &name_len);
+		// searches for mac-nvd in processor_name and returns the pointer to the first occurance of it.
+		// If no match found then executes the inside condition.
 		if (strstr(processor_name, "mac-nvd") != NULL) {
 			if (_UID & 1)
 				dev_nr = 1;
 		}
+
+		// TODO: does something.....?
 		cDevice =
 				&((*cDevices)[/* ConfigSingleton::Instance()->device_nrd*/dev_nr]);
 
@@ -227,8 +242,13 @@ class CController
 
 public:
 
+	// controller class constructor
 	CController(int UID, CDomain<T> domain, int BC[3][2]) :
-			_UID(UID), _domain(domain), cLbmVisualization(NULL) {
+			_UID(UID),
+			_domain(domain),
+			cLbmVisualization(NULL)
+	{
+		// boundary conditions for upper and lower boundary in each of the 3-dimensions
 		for (int i = 0; i < 3; i++)
 			for (int j = 0; j < 2; j++)
 				_BC[i][j] = BC[i][j];
@@ -237,6 +257,7 @@ public:
 		if (-1 == initLBMSolver())
 			throw "Initialization of LBM Solver failed!";
 	}
+
 	~CController() {
 		if (cPlatforms)
 			delete cPlatform;
@@ -262,11 +283,17 @@ public:
 		}
 	}
 
+	// Each Controller instance needs to communicate with neighboring Controller instances in order
+	// to synchronize the ghost layer data. This task is accomplished by syncAlpha and sync-
+	// Beta functions which send the alpha and beta ghost layer data respectively.
+
+	// alpha-sync to copy ghost layers to subdomain of adjacent Process after collision step
 	void syncAlpha() {
 #if DEBUG
 		std::cout << "--> Sync alpha" << std::endl;
 #endif
 		// TODO: OPTIMIZATION: communication of different neighbors can be done in Non-blocking way.
+		// instance of CComm class for communication b/n neighbours.
 		typename std::vector<CComm<T>*>::iterator it = _comm_container.begin();
 		for (; it != _comm_container.end(); it++) {
 			CVector<3, int> send_size = (*it)->getSendSize();
@@ -284,18 +311,35 @@ public:
 			T* send_buffer = new T[send_buffer_size];
 			T* recv_buffer = new T[recv_buffer_size];
 
+			// overloaded versions of syncAlpha and syncBeta functions with MPI Request and MPI Status,
+			// provides the ability to perform a non-blocking MPI communication.
 			MPI_Request req[2];
 			MPI_Status status[2];
 
 			// Download data from device to host
-			cLbmPtr->storeDensityDistribution(send_buffer, send_origin,
-					send_size);
+			cLbmPtr->storeDensityDistribution(send_buffer, send_origin,	send_size);
 			//cLbmPtr->wait();
 			int my_rank, num_procs;
 			MPI_Comm_rank(MPI_COMM_WORLD, &my_rank); /// Get current process id
 			MPI_Comm_size(MPI_COMM_WORLD, &num_procs); /// get number of processes
 
+			// send and receive the ghost layer. For float and double data types.
 			if (typeid(T) == typeid(float)) {
+				// begins a non-blocking send:
+				// MPI_Isend(initial address of send buffer,
+				//				no. of elements in send buffer(int),
+				//				datatype of each send buffer element,
+				//				rank of destination(int),
+				//				message tag(int),
+				//				communicator,
+				//				communication request)	
+				// MPI_Irecv(initial address of receive buffer,
+				//				no. of elements in receive buffer(int),
+				//				datatype of each receive buffer element,
+				//				type of source(int),
+				//				message tag(int),
+				//				communicator,
+				//				communication request)	
 				MPI_Isend(send_buffer, send_buffer_size, MPI_FLOAT, dst_rank,
 						MPI_TAG_ALPHA_SYNC, MPI_COMM_WORLD, &req[0]);
 				MPI_Irecv(recv_buffer, recv_buffer_size, MPI_FLOAT, dst_rank,
@@ -308,10 +352,10 @@ public:
 			} else {
 				throw "Type id of MPI send/receive buffer is unknown!";
 			}
+			// Waits for all given MPI Requests to complete.
 			MPI_Waitall(2, req, status);
 
-			cLbmPtr->setDensityDistribution(recv_buffer, recv_origin,
-					recv_size);
+			cLbmPtr->setDensityDistribution(recv_buffer, recv_origin, recv_size);
 			cLbmPtr->wait();
 
 			delete[] send_buffer;
@@ -319,12 +363,18 @@ public:
 		}
 	}
 
+	// the beta-kernel reads the density distribution values from the adjacent 
+	// cells and after performing the computation, the results are written to the
+	// adjacent cells in the direction of lattice vector of the computing density distribution.
+
+	// beta-sync to copy back ghost layers to subdomain of original Process after computations.
 	void syncBeta() {
 #if DEBUG
 		std::cout << "--> Sync beta" << std::endl;
 #endif
 
 		// TODO: OPTIMIZATION: communication of different neighbors can be done in Non-blocking form.
+		// instance of CComm class for communication b/n neighbours.	
 		typename std::vector<CComm<T>*>::iterator it = _comm_container.begin();
 		for (; it != _comm_container.end(); it++) {
 			// the send and receive values in beta sync is the opposite values of
@@ -332,7 +382,7 @@ public:
 			// will be sent back to their origin
 			CVector<3, int> send_size = (*it)->getRecvSize();
 			CVector<3, int> recv_size = (*it)->getSendSize();
-			;
+			;	// TODO: wtf is this semi-colon doing here and in the for-loop.....?
 			CVector<3, int> send_origin = (*it)->getRecvOrigin();
 			CVector<3, int> recv_origin = (*it)->getSendOrigin();
 			CVector<3, int> normal = (*it)->getCommDirection();
@@ -350,13 +400,13 @@ public:
 			MPI_Status status[2];
 
 			// Download data from device to host
-			cLbmPtr->storeDensityDistribution(send_buffer, send_origin,
-					send_size);
+			cLbmPtr->storeDensityDistribution(send_buffer, send_origin, send_size);
 			//cLbmPtr->wait();
 			int my_rank, num_procs;
 			MPI_Comm_rank(MPI_COMM_WORLD, &my_rank); /// Get current process id
 			MPI_Comm_size(MPI_COMM_WORLD, &num_procs); /// get number of processes
 
+			// same as in syncAlpha() above.
 			if (typeid(T) == typeid(float)) {
 				MPI_Isend(send_buffer, send_buffer_size, MPI_FLOAT, dst_rank,
 						MPI_TAG_BETA_SYNC, MPI_COMM_WORLD, &req[0]);
@@ -373,8 +423,7 @@ public:
 			MPI_Waitall(2, req, status);
 
 			// TODO: OPTIMIZATION: you need to wait only for receiving to execute following command
-			cLbmPtr->setDensityDistribution(recv_buffer, recv_origin, recv_size,
-					normal);
+			cLbmPtr->setDensityDistribution(recv_buffer, recv_origin, recv_size, normal);
 			cLbmPtr->wait();
 
 			delete[] send_buffer;
@@ -382,7 +431,8 @@ public:
 		}
 	}
 
-	void computeNextStep() {
+	void computeNextStep()
+	{
 		cLbmPtr->simulationStep();
 		if (cLbmPtr->simulation_step_counter & 1)
 			syncBeta();
@@ -393,8 +443,9 @@ public:
 	 * This function starts the simulation for the particular subdomain corresponded to
 	 * this class.
 	 */
-	int run() {
-		CVector<3, int> domain_size = _domain.getSize();
+	int run()
+	{
+		CVector<3, int> domain_size = _domain.getSize();	// obtains the size from CDomain class
 		int loops = ConfigSingleton::Instance()->loops;
 		if (loops < 0)
 			loops = 100;
@@ -411,8 +462,7 @@ public:
 		floats_per_cell += 1.0;
 
 		// velocity vector is also stored
-		if (ConfigSingleton::Instance()->do_visualization
-				|| ConfigSingleton::Instance()->debug_mode)
+		if (ConfigSingleton::Instance()->do_visualization || ConfigSingleton::Instance()->debug_mode)
 			floats_per_cell += 3;
 		CStopwatch cStopwatch;
 
@@ -421,23 +471,25 @@ public:
 		std::stringstream ss_file;
 		ss_file << "./" << VTK_OUTPUT_DIR << "/" << outputfilename;
 		std::string outputfile = ss_file.str();
-		if (ConfigSingleton::Instance()->do_visualization) {
+		if (ConfigSingleton::Instance()->do_visualization)
+		{
 			cLbmVisualization = new CLbmVisualizationVTK<T>(_UID, outputfile);
 			cLbmVisualization->setup(cLbmPtr);
 		}
 
 		cStopwatch.start();
+		// simulation starts here.
 		for (int i = 0; i < loops; i++) {
 			computeNextStep();
 			//simulation
-			if (ConfigSingleton::Instance()->do_visualization // && (i %  100 == 0)
-			    )
+			if (ConfigSingleton::Instance()->do_visualization) // && (i %  100 == 0))
 				cLbmVisualization->render(i);
 		}
 		cLbmPtr->wait();
 		cStopwatch.stop();
 #if DEBUG
-		if (domain_size.elements() <= 512) {
+		if (domain_size.elements() <= 512)
+		{
 			cLbmPtr->debug_print();
 		}
 #endif
@@ -445,7 +497,20 @@ public:
 #if BENCHMARK
 		double ltime = cStopwatch.time;
 		double gtime;
-		//int MPI_Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
+		//int MPI_Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root,
+		//					MPI_Comm comm)
+
+		// Reduces values on all processes to a single value 
+		// MPI_Reduce(address of send buffer,
+		// 				recv_data array contains the reduced result and has a size of sizeof(datatype) * count,
+		//				number of elements in send buffer (int),
+		// 				data type of elements of send buffer,
+		// 				reduce operation to be applied to data,
+		// 				rank of root process (int),
+		// 				communicator)
+		// outputs: address of receive buffer
+		// MPI_MAX returns the maximum element.
+		// recv_data is only relevant on the process with a rank of root.
 		MPI_Reduce(&ltime, &gtime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 		if (_UID == 0) {
 			double gfps = (((double)loops) / gtime);
@@ -453,14 +518,18 @@ public:
 			double gbandwidth = (gmlups*floats_per_cell*(double)sizeof(T));
 			std::stringstream benchmark_file_name;
 			benchmark_file_name << "./" << BENCHMARK_OUTPUT_DIR << "/" <<
+
+			// creates the .ini file for writing data
 			"benchmark_" << ConfigSingleton::Instance()->subdomain_num.elements() //<< "_" << _UID
 			<< ".ini";
 			const std::string& tmp = benchmark_file_name.str();
 			const char* cstr = tmp.c_str();
+			// ios::app = appending the content to the current content of the file
 			std::ofstream benchmark_file (cstr, std::ios::out | std::ios::app );
 			if (benchmark_file.is_open())
 			{
 				//benchmark_file << "[RESULTS]" << std::endl;
+				// writes data to *.ini file
 				benchmark_file << "CUBE_X : " << ConfigSingleton::Instance()->domain_size[0] << std::endl;
 				benchmark_file << "CUBE_Y : " << ConfigSingleton::Instance()->domain_size[1] << std::endl;
 				benchmark_file << "CUBE_Z : " << ConfigSingleton::Instance()->domain_size[2] << std::endl;
@@ -475,21 +544,20 @@ public:
 			else std::cout << "Unable to open file";
 		}
 #endif // end of BENCHMARK
+		// display results 
 		std::cout << std::endl;
 		std::cout << "Cube: " << domain_size << std::endl;
 		std::cout << "Seconds: " << cStopwatch.time << std::endl;
 		double fps = (((double) loops) / cStopwatch.time);
 		std::cout << "FPS: " << fps << std::endl;
-		double mlups =
-				((double) fps * (double) cLbmPtr->domain_cells.elements())
+		double mlups = ((double) fps * (double) cLbmPtr->domain_cells.elements())
 						* (double) 0.000001;
 		std::cout << "MLUPS: " << mlups << std::endl;
-		std::cout << "Bandwidth: "
-				<< (mlups * floats_per_cell * (double) sizeof(T))
+		std::cout << "Bandwidth: "<< (mlups * floats_per_cell * (double) sizeof(T))
 				<< " MB/s (RW, bidirectional)" << std::endl;
 		std::streamsize ss = std::cout.precision();
 		std::cout.precision(8);
-		std::cout.setf(std::ios::fixed, std::ios::floatfield);
+		std::cout.setf(std::ios::fixed, std::ios::floatfield);	// format flags
 #if DEBUG
 		// The velocity checksum is only stored in debug mode!
 		vector_checksum = cLbmPtr->getVelocityChecksum();
@@ -516,6 +584,8 @@ public:
 		} else std::cout << "Unable to open file: " << pcstr << std::endl;
 		// const std::string& tmp = profile_file_name.str();
 		// const char* cstr = tmp.c_str();
+
+		//  a singleton class of Profiler created by Instance() using Singleton.hpp defined in common.h
 		ProfilerSingleton::Instance()->saveEvents(profile_file_name.str());
 #endif
 		return EXIT_SUCCESS;

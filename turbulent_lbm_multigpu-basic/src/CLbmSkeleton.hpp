@@ -42,7 +42,7 @@ public:
 	CError error;		///< error hanlder
 	bool debug;			///< true, if debug mode is on
 
-	CDomain<T> domain;
+	CDomain<T> domain;	// CDomain class instance
 	CVector<3,int> domain_cells;	///< available simulation cells in each dimension
 	int domain_cells_count;			///< overall number of simulation cells
 	CVector<4, T> d_drivenCavityVelocity;
@@ -93,7 +93,7 @@ public:
 		 * to avoid large velocities and thus an unstable simulation
 		 */
 
-		if (gravitation.length() >= max_sim_gravitation_length)
+		if (gravitation.length() >= max_sim_gravitation_length)	// gravitation.length(): obtains length from the CVector member function length()
 		{
 			if (info_output)
 			{
@@ -194,7 +194,9 @@ public:
 	 */
 	//CLbmSkeleton(CDomain<T> _domain, bool p_debug = false): domain(_domain)
 	CLbmSkeleton(CDomain<T> _domain, CVector<4, T> _drivenCavityVelocity) :
-			domain(_domain), d_drivenCavityVelocity(_drivenCavityVelocity) {
+			domain(_domain),
+			d_drivenCavityVelocity(_drivenCavityVelocity)
+	{
 	}
 };
 

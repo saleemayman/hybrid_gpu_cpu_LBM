@@ -35,6 +35,8 @@
 #include "Singleton.hpp"
 #include "tinyxml2.h"
 
+// creates the 19 unit vectors for the D3Q19 scheme using the
+// CVector template for 3-dimensional vectors.
 CVector<3,int> E0(1,0,0) 	;
 CVector<3,int> E1(-1,0,0)	;
 CVector<3,int> E2(0,1,0)	;
@@ -58,6 +60,9 @@ CVector<3,int> E15(0,-1,1)	;
 CVector<3,int> E16(0,0,1)	;
 CVector<3,int> E17(0,0,-1)	;
 CVector<3,int> E18(0,0,0)	;
+
+// initialize lbm_units vector with the 19 Q19 unit vectors, each 
+// element having 3 components corresponding to each E?
 CVector<3,int> lbm_units[] = {	E0,E1,E2,E3,
 		E4,E5,E6,E7,
 		E8,E9,E10,E11,
@@ -66,9 +71,10 @@ CVector<3,int> lbm_units[] = {	E0,E1,E2,E3,
 };
 
 // simulation type
-typedef float T;
+typedef float T;	// data type defined as float
 //typedef double T;
-#define VALIDATION_RANK 0
+#define VALIDATION_RANK 0 	// TODO: what is this variable for?
+// this function called on Line 481.
 void extract_comma_separated_integers(std::list<int> &int_list, std::string &int_string)
 {
 	size_t start_pos = 0;
@@ -93,6 +99,7 @@ void extract_comma_separated_integers(std::list<int> &int_list, std::string &int
 	int_list.push_back(atoi(int_string.substr(start_pos).c_str()));
 }
 
+// ................ Start reading from here!
 int main(int argc, char** argv)
 {
 	bool debug = false;

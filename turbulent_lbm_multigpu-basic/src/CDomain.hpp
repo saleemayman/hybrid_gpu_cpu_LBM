@@ -22,13 +22,18 @@ class CDomain {
 	CVector<3, T> _length; ///< Length of the domain in each direction
 
 public:
-	CDomain(int UID, CVector<3, int> size, CVector<3, int> origin_cell,
-			CVector<3, T> length) :
-			_UID(UID), _size(size), _origin_cell(origin_cell), _length(length) {
-
+	// initialiser list for class members
+	CDomain(int UID, CVector<3, int> size, CVector<3, int> origin_cell,	CVector<3, T> length) :
+			_UID(UID), 
+			_size(size), 
+			_origin_cell(origin_cell), 
+			_length(length) {
 	}
+
+	// initialising cell-origin and length values. Assumed(?) to be constant.
 	CDomain(int UID, CVector<3, int> size) :
-			_UID(UID), _size(size) {
+			_UID(UID), 
+			_size(size) {
 		_origin_cell = CVector<3, int>(0, 0, 0);
 		_length = CVector<3, T>(0.05, 0.05, 0.05);
 	}
@@ -38,6 +43,7 @@ public:
 	}
 
 public:
+	// member functions
 	CVector<3, int> getOrigin() const {
 		return _origin_cell;
 	}

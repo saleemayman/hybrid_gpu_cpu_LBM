@@ -70,7 +70,7 @@ CVector<3,int> lbm_units[] = {	E0,E1,E2,E3,
 		E16,E17,E18
 };
 
-// simulation type
+// simulation data type
 typedef float T;	// data type defined as float
 //typedef double T;
 #define VALIDATION_RANK 0 	// TODO: what is this variable for?
@@ -81,29 +81,30 @@ void extract_comma_separated_integers(std::list<int> &int_list, std::string &int
 
 	size_t comma_pos;
 
-	comma_pos = int_string.find_first_of(',', start_pos);
+	// find the first , in the string
+	comma_pos = int_string.find_first_of(',', start_pos);	// start_pos=0 means the entire string is searched
 
-	while (comma_pos != std::string::npos)
+	while (comma_pos != std::string::npos)	// meaning until the end of the string
 	{
-		std::string substring = int_string.substr(start_pos, comma_pos-start_pos);
+		std::string substring = int_string.substr(start_pos, comma_pos - start_pos);
 
 		int number;
 
 		if (substring.empty())	number = 0;
-		else					number = atoi(substring.c_str());
+		else					number = atoi(substring.c_str());	// finds the first non-white characters in string and converts them to valid integers
 
-		int_list.push_back(number);
+		int_list.push_back(number);	//Adds a new element at the end of the list container
 		start_pos = comma_pos+1;
 		comma_pos = int_string.find_first_of(',', start_pos);
 	}
 	int_list.push_back(atoi(int_string.substr(start_pos).c_str()));
 }
 
-// ................ Start reading from here!
 int main(int argc, char** argv)
 {
 	bool debug = false;
 
+	// initialize domain and physical parameters
 	CVector<3,int> domain_size(32,32,32);
 	CVector<3,int> subdomain_nums(1,1,1);
 	CVector<3,T> domain_length(0.1,0.1,0.1);
@@ -120,7 +121,7 @@ int main(int argc, char** argv)
 	bool unit_test = false;
 	size_t computation_kernel_count = 128;
 
-	std::string number_of_registers_string;	///< string storing the number of registers for opencl threads separated with comma
+	std::string number_of_registers_string;		///< string storing the number of registers for opencl threads separated with comma
 	std::string number_of_threads_string;		///< string storing the number of threads for opencl separated with comma
 	std::string test_suite;
 	bool use_config_file = false;
@@ -128,6 +129,7 @@ int main(int argc, char** argv)
 
 	int device_nr = 0;
 
+	// get all the options supplied in the input. Loop exits when getopt returns -1, i.e., when no inputs found
 	char optchar;
 	while ((optchar = getopt(argc, argv, "x:y:z:d:vr:k:gG:t:sl:R:T:X:Y:Z:S:u:c:n:m:p:")) > 0)
 	{
@@ -267,6 +269,7 @@ int main(int argc, char** argv)
 	if( use_config_file) {
 		ConfigSingleton::Instance()->loadFile(conf_file);
 	} else {
+		// extract  data from the config file
 		ConfigSingleton::Instance()->domain_size = domain_size;
 		ConfigSingleton::Instance()->subdomain_num = subdomain_nums;
 		ConfigSingleton::Instance()->domain_length = domain_length;
@@ -287,12 +290,13 @@ int main(int argc, char** argv)
 	ConfigSingleton::Instance()->printMe();
 #endif
 
-	if (unit_test) {
+
+	if (unit_test) {	// run unit tests to check for logic errors in classes
 
 		if ( strcmp(  "all", test_suite.c_str() ) == 0 ) {
 			if( debug)
 				std::cout << "running all test." << std::endl;
-			return UnitTest::RunAllTests();
+			return UnitTest::RunAllTests();	// runs the unit tests
 		}
 		else {
 			const UnitTest::TestList& allTests( UnitTest::Test::GetTestList() );
@@ -330,8 +334,8 @@ int main(int argc, char** argv)
 		}
 
 		if (my_rank != num_procs -1) {
-			manager->initSimulation(my_rank);
-			manager->startSimulation();
+			manager->initSimulation(my_rank);	// initialize simulation for the sub-domain
+			manager->startSimulation();			// run sub-domain simulation
 
 			// getting the local data
 			if ( my_rank == VALIDATION_RANK) {
@@ -434,7 +438,7 @@ int main(int argc, char** argv)
 		delete manager;
 
 		MPI_Finalize();    /// Cleanup MPI
-	}
+	} 
 
 	return 0;
 
